@@ -1,6 +1,6 @@
-package com.beyond.basic.b2_board.common.handler;
+package com.beyond16.ordersystem.common.service;
 
-import com.beyond.basic.b2_board.common.dto.CommonErrorDto;
+import com.beyond16.ordersystem.common.dto.CommonErrorDto;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;

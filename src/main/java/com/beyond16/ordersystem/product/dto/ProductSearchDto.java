@@ -1,4 +1,4 @@
-package com.beyond16.ordersystem.member.dto;
+package com.beyond16.ordersystem.product.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Data
 @Builder
-public class LoginReqDto {
-    private String email;
-    private String password;
+public class ProductSearchDto {
+    private String category;
+    private String productName;
 }

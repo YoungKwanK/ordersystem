@@ -1,8 +1,8 @@
-package com.beyond.basic.b2_board.common;
+package com.beyond16.ordersystem.common;
 
-import com.beyond.basic.b2_board.author.domain.Author;
-import com.beyond.basic.b2_board.author.domain.Role;
-import com.beyond.basic.b2_board.author.repository.AuthorRepository;
+import com.beyond16.ordersystem.member.domain.Member;
+import com.beyond16.ordersystem.member.domain.Role;
+import com.beyond16.ordersystem.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,18 +12,18 @@ import org.springframework.stereotype.Component;
 @Component
 @RequiredArgsConstructor
 public class InitialDataLoader implements CommandLineRunner {
-    private final AuthorRepository authorRepository;
+    private final MemberRepository memberRepository;
     private final PasswordEncoder passwordEncoder;
     @Override
     public void run(String... args) throws Exception {
-        if(authorRepository.findByEmail("admin@naver.com").isPresent()) {
+        if(memberRepository.findByEmail("admin@naver.com").isPresent()) {
             return;
         }
-        Author author = Author.builder()
+        Member member = Member.builder()
                 .email("admin@naver.com")
                 .role(Role.ADMIN)
                 .password(passwordEncoder.encode("12341234"))
                 .build();
-        authorRepository.save(author);
+        memberRepository.save(member);
     }
 }

@@ -1,1 +1,3 @@
-spring.application.name=ordersystem
+spring:
+  profiles:
+    active: prod
