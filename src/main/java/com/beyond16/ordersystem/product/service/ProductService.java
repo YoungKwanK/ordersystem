@@ -1,11 +1,13 @@
 package com.beyond16.ordersystem.product.service;
 
+import com.beyond16.ordersystem.common.service.StockInventoryService;
 import com.beyond16.ordersystem.member.domain.Member;
 import com.beyond16.ordersystem.member.repository.MemberRepository;
 import com.beyond16.ordersystem.product.domain.Product;
 import com.beyond16.ordersystem.product.dto.ProductCreateDto;
 import com.beyond16.ordersystem.product.dto.ProductResDto;
 import com.beyond16.ordersystem.product.dto.ProductSearchDto;
+import com.beyond16.ordersystem.product.dto.ProductUpdateDto;
 import com.beyond16.ordersystem.product.repository.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.persistence.criteria.CriteriaBuilder;
@@ -21,7 +23,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
@@ -41,6 +42,7 @@ public class ProductService {
     private final ProductRepository productRepository;
     private final MemberRepository memberRepository;
     private final S3Client s3Client;
+    private final StockInventoryService stockInventoryService;
 
     public Long save(ProductCreateDto productCreateDto){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -48,7 +50,7 @@ public class ProductService {
         Product product = productRepository.save(productCreateDto.toEntity(member));
 
         if(!productCreateDto.getProductImage().isEmpty()) {
-            String fileName = "product-"+product.getId()+"-productImage-"+productCreateDto.getProductImage().getOriginalFilename();
+            String fileName = "product-"+"productImage"+product.getId();
 
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
                     .bucket(bucket)
@@ -65,6 +67,9 @@ public class ProductService {
             String imgUrl = s3Client.utilities().getUrl(a->a.bucket(bucket).key(fileName)).toExternalForm();
             product.updateImageUrl(imgUrl);
         }
+
+//        상품 등록시 redis에 재고 세팅
+        stockInventoryService.makeStockQuantity(product.getId(), product.getStockQuantity());
         return product.getId();
     }
 
@@ -97,5 +102,38 @@ public class ProductService {
         return ProductResDto.fromEntity(productRepository.findById(id).orElseThrow(
                 ()-> new EntityNotFoundException("해당 상품이 존재하지 않습니다.")
         ));
+    }
+
+    public Long updateProduct(Long id, ProductUpdateDto productUpdateDto){
+        Product product = productRepository.findById(id).orElseThrow(
+                ()->new EntityNotFoundException("해당 상품이 존재하지 않습니다.")
+        );
+        product.updateProduct(productUpdateDto);
+        // 이미 이미지가 있을 경우 삭제
+        if (product.getImagePath() != null) {
+            String imgUrl = product.getImagePath();
+            String fileName = imgUrl.substring(imgUrl.lastIndexOf("/") + 1);
+            s3Client.deleteObject(a -> a.bucket(bucket).key(fileName));
+        }
+        // 이미지 등록
+        if(productUpdateDto.getProductImage()!=null && !productUpdateDto.getProductImage().isEmpty()) {
+            String fileName = "product-"+"productImage-"+product.getId();
+
+            PutObjectRequest putObjectRequest = PutObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(fileName)
+                    .contentType(productUpdateDto.getProductImage().getContentType())
+                    .build();
+
+            try {
+                s3Client.putObject(putObjectRequest, RequestBody.fromBytes(productUpdateDto.getProductImage().getBytes()));
+            } catch (Exception e) {
+                throw new IllegalArgumentException("이미지 업로드 실패");
+            }
+//        이미지 url추출
+            String imgUrl = s3Client.utilities().getUrl(a->a.bucket(bucket).key(fileName)).toExternalForm();
+            product.updateImageUrl(imgUrl);
+        }
+        return id;
     }
 }

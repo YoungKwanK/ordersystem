@@ -2,6 +2,7 @@ package com.beyond16.ordersystem.product.domain;
 
 import com.beyond16.ordersystem.common.domain.BaseTimeEntity;
 import com.beyond16.ordersystem.member.domain.Member;
+import com.beyond16.ordersystem.product.dto.ProductUpdateDto;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,5 +29,16 @@ public class Product extends BaseTimeEntity {
 
     public void updateImageUrl(String imageUrl) {
         this.imagePath = imageUrl;
+    }
+
+    public void updateProduct(ProductUpdateDto productUpdateDto){
+        this.name = productUpdateDto.getName();
+        this.category = productUpdateDto.getCategory();
+        this.price = productUpdateDto.getPrice();
+        this.stockQuantity = productUpdateDto.getStockQuantity();
+    }
+
+    public void updateStockQuantity(Integer stockQuantity){
+        this.stockQuantity -= stockQuantity;
     }
 }

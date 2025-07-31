@@ -3,6 +3,7 @@ package com.beyond16.ordersystem.product.controller;
 import com.beyond16.ordersystem.common.dto.CommonDto;
 import com.beyond16.ordersystem.product.dto.ProductCreateDto;
 import com.beyond16.ordersystem.product.dto.ProductSearchDto;
+import com.beyond16.ordersystem.product.dto.ProductUpdateDto;
 import com.beyond16.ordersystem.product.service.ProductService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -56,4 +57,16 @@ public class ProductController {
                 .build(),
                 HttpStatus.OK);
     }
+
+    @PutMapping("/update/{id}")
+    public ResponseEntity<?> updateProduct(@PathVariable Long id, @ModelAttribute ProductUpdateDto productUpdateDto){
+        return new ResponseEntity<>(CommonDto.builder()
+                .result(productService.updateProduct(id, productUpdateDto))
+                .status_code(HttpStatus.OK.value())
+                .status_message("상품수정성공")
+                .build(),
+                HttpStatus.OK);
+    }
+
+
 }
