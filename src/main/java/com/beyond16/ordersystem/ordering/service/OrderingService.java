@@ -1,5 +1,6 @@
 package com.beyond16.ordersystem.ordering.service;
 
+import com.beyond16.ordersystem.common.service.SSEAlamService;
 import com.beyond16.ordersystem.common.service.StockInventoryService;
 import com.beyond16.ordersystem.common.service.StockRabbitMqService;
 import com.beyond16.ordersystem.member.domain.Member;
@@ -31,6 +32,7 @@ public class OrderingService {
     private final ProductRepository productRepository;
     private final StockInventoryService stockInventoryService;
     private final StockRabbitMqService stockRabbitMqService;
+    private final SSEAlamService sseAlamService;
 
     public Long createOrdering(List<OrderCreateDto> orderCreateDtoList){
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -91,7 +93,12 @@ public class OrderingService {
 //            rdb에 사후 update를 위한 메시지 발행(비동기처리)
             stockRabbitMqService.publish(orderCreateDto.getProductId(), orderCreateDto.getProductCount());
         }
-        return orderingRepository.save(ordering).getId();
+        orderingRepository.save(ordering);
+        
+//        주문성공 시 admin 유저에게 알림메시지 전송
+        sseAlamService.publishMessage("admin@naver.com", email, ordering.getId());
+
+        return ordering.getId();
     }
 
     @Transactional(readOnly = true)
@@ -110,5 +117,19 @@ public class OrderingService {
         return orderingRepository.findAllByMember(member).stream()
                 .map(a->OrderListResDto.fromEntity(a))
                 .toList();
+    }
+
+    public Long cancel(Long orderId){
+//        Ordering DB에 상태값 변경 CANCELED
+        Ordering ordering = orderingRepository.findById(orderId).orElseThrow(()->new EntityNotFoundException("not found order"));
+        ordering.cancelStatus();
+        for(OrderDetail orderDetail : ordering.getOrderDetails()){
+            Product product = orderDetail.getProduct();
+//        redis의 재고값 증가
+            stockInventoryService.increaseStockQuantity(product.getId(), orderDetail.getQuantity());
+//        rdb재고 업데이트
+            product.cancelOrder(orderDetail.getQuantity());
+        }
+        return ordering.getId();
     }
 }

@@ -26,4 +26,8 @@ public class Ordering extends BaseTimeEntity {
     private Member member;
     @OneToMany(mappedBy = "ordering", fetch = FetchType.LAZY, cascade = CascadeType.PERSIST, orphanRemoval = true)
     private List<OrderDetail> orderDetails;
+
+    public void cancelStatus() {
+        this.orderStatus = OrderStatus.CANCELED;
+    }
 }

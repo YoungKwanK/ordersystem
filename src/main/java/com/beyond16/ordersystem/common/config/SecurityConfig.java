@@ -39,7 +39,7 @@ public class SecurityConfig {
                 .addFilterBefore(jwtTokenFilter, UsernamePasswordAuthenticationFilter.class)
                 .exceptionHandling(e->
                         e.authenticationEntryPoint(jwtAuthenticationHandler) // 401의 경우
-                                .accessDeniedHandler(jwtAuthorizationHandler) // 403의 경우
+//                                .accessDeniedHandler(jwtAuthorizationHandler) // 403의 경우
                 )
                 .authorizeHttpRequests(a->a.requestMatchers("/member/create", "member/doLogin", "member/refresh-at",
                         "product/detail/*", "product/list").permitAll().anyRequest().authenticated())

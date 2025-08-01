@@ -1,6 +1,7 @@
 package com.beyond16.ordersystem.ordering.controller;
 
 import com.beyond16.ordersystem.common.dto.CommonDto;
+import com.beyond16.ordersystem.ordering.domain.Ordering;
 import com.beyond16.ordersystem.ordering.dto.OrderCreateDto;
 import com.beyond16.ordersystem.ordering.service.OrderingService;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +46,17 @@ public class OrderingController {
                 .result(orderingService.findAllMyOrders())
                 .status_code(HttpStatus.OK.value())
                 .status_message("모든 주문 조회 성공")
+                .build(),
+                HttpStatus.OK);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @DeleteMapping("/cancel/{id}")
+    public ResponseEntity<?> orderCancel(@PathVariable Long id) {
+        return new ResponseEntity<>(CommonDto.builder()
+                .result(orderingService.cancel(id))
+                .status_code(HttpStatus.OK.value())
+                .status_message("주문 취소 성공")
                 .build(),
                 HttpStatus.OK);
     }
